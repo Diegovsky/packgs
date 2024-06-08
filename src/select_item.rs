@@ -114,7 +114,7 @@ pub fn select_multiple<'a>(
                 let [ref mut to_add, ref mut to_remove] = lists;
                 let mut to_remove = to_remove;
                 let mut to_add = to_add;
-                if current_list == 1 {
+                if current_list == 0 {
                     std::mem::swap(&mut to_remove, &mut to_add);
                 }
                 if !to_remove.is_empty() {
