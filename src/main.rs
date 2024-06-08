@@ -11,13 +11,14 @@ use std::fs::File;
 use std::io::stdout;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::io::BufWriter;
+use std::io::Write;
 
 use color_eyre::{config::HookBuilder, Result};
 
+mod help_page;
 mod packages;
 mod select_item;
-mod help_page;
-
 
 fn main() -> Result<()> {
     // setup terminal
@@ -92,19 +93,21 @@ impl std::cmp::PartialOrd for Item<'_> {
 
 fn app(terminal: Terminal<impl Backend>, filename: Option<&OsStr>) -> Result<()> {
     let mut arch_pkgs = packages::ArchPackages::new()?;
-    let selected = BufReader::new(File::open(filename.unwrap_or(OsStr::new("selected.txt")))?);
-    let selected: HashSet<String> = selected.lines().map(|l| l.unwrap()).collect();
-    let (selected, unselected) = arch_pkgs
+    let filename = filename.unwrap_or(OsStr::new("selected.txt"));
+    let selected: HashSet<String> = File::open(filename)
+        .map(|f| BufReader::new(f).lines().map(|l| l.unwrap()).collect())
+        .unwrap_or_default();
+    let (mut selected, mut unselected) = arch_pkgs
         .get_root_packages()
         .partition(|item| selected.contains(item.name()));
-    let selections = select_item::select_multiple(selected, unselected, terminal);
-    /*
-    let mut f = BufWriter::new(File::create("selected.txt")?);
-    for l in selections {
-        f.write_all(l.as_bytes())?;
+
+    select_item::select_multiple(&mut selected, &mut unselected, terminal)?;
+
+    let mut f = BufWriter::new(File::create(filename)?);
+    for l in selected {
+        f.write_all(l.name().as_bytes())?;
         f.write_all(b"\n")?;
     }
-     */
 
     Ok(())
 }

@@ -29,6 +29,10 @@ fn handle_event(event: event::Event) -> Option<Message> {
                     'G' => Message::JumpSelection { to_start: false },
                     _ => return None,
                 },
+                KeyCode::Up => Message::MoveSelection { is_down: false },
+                KeyCode::Down => Message::MoveSelection { is_down: true },
+                KeyCode::Home => Message::JumpSelection { to_start: true },
+                KeyCode::End => Message::JumpSelection { to_start: false },
                 KeyCode::Enter => Message::Select,
                 KeyCode::Tab => Message::ChangeFocus,
                 KeyCode::Esc => Message::Quit,
@@ -65,8 +69,8 @@ fn draw_information(frame: &mut Frame) -> Rect {
 type Set<T> = Vec<T>;
 
 pub fn select_multiple<'a>(
-    mut selected: Set<Item<'a>>,
-    mut unselected: Set<Item<'a>>,
+    selected: &mut Set<Item<'a>>,
+    unselected: &mut Set<Item<'a>>,
     mut terminal: Terminal<impl Backend>,
 ) -> crate::Result<()> {
     let mut lists = [unselected, selected];
